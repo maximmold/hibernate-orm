@@ -23,15 +23,6 @@
  */
 package org.hibernate.loader.plan.exec.process.internal;
 
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.hibernate.LockMode;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.QueryParameters;
@@ -46,8 +37,16 @@ import org.hibernate.loader.plan.spi.LoadPlan;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.persister.entity.Loadable;
 import org.hibernate.type.EntityType;
-
 import org.jboss.logging.Logger;
+
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Steve Ebersole
@@ -154,7 +153,7 @@ public class ResultSetProcessingContextImpl implements ResultSetProcessingContex
 				.getLockMode() != null ) {
 			return queryParameters.getLockOptions().getLockMode();
 		}
-		return LockMode.READ;
+		return LockMode.NONE;
 	}
 
 	private Map<EntityReference,EntityReferenceProcessingState> identifierResolutionContextMap;
