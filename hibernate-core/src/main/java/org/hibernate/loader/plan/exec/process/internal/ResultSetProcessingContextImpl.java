@@ -28,6 +28,7 @@ import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.QueryParameters;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SubselectFetch;
+import org.hibernate.loader.collection.plan.AbstractLoadPlanBasedCollectionInitializer;
 import org.hibernate.loader.plan.exec.process.spi.ResultSetProcessingContext;
 import org.hibernate.loader.plan.exec.query.spi.NamedParameterContext;
 import org.hibernate.loader.plan.spi.EntityFetch;
@@ -153,7 +154,7 @@ public class ResultSetProcessingContextImpl implements ResultSetProcessingContex
 				.getLockMode() != null ) {
 			return queryParameters.getLockOptions().getLockMode();
 		}
-		return LockMode.NONE;
+		return AbstractLoadPlanBasedCollectionInitializer.isHHH9764OptimsticLockingFixEnabled() ? LockMode.NONE : LockMode.READ;
 	}
 
 	private Map<EntityReference,EntityReferenceProcessingState> identifierResolutionContextMap;

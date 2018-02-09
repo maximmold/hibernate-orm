@@ -26,6 +26,7 @@ package org.hibernate.loader.collection.plan;
 
 import org.hibernate.AssertionFailure;
 import org.hibernate.HibernateException;
+import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.QueryParameters;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -58,7 +59,7 @@ public abstract class AbstractLoadPlanBasedCollectionInitializer
 
 	private final QueryableCollection collectionPersister;
 	private final LoadQueryDetails staticLoadQuery;
-	private final LockOptions lockOptions;
+	private LockOptions lockOptions;
 
 	public AbstractLoadPlanBasedCollectionInitializer(
 			QueryableCollection collectionPersister,
@@ -66,15 +67,23 @@ public abstract class AbstractLoadPlanBasedCollectionInitializer
 		super( collectionPersister.getFactory() );
 		this.collectionPersister = collectionPersister;
 
-		this.lockOptions = buildingParameters.getLockMode() != null
-				? new LockOptions( buildingParameters.getLockMode() )
-				: buildingParameters.getLockOptions();
+		LockMode lockMode;
+		if (isHHH9764OptimsticLockingFixEnabled()) {
+			this.lockOptions = buildingParameters.getLockMode() != null
+					? new LockOptions(buildingParameters.getLockMode())
+					: buildingParameters.getLockOptions();
+			lockMode = this.lockOptions.getLockMode();
+		} else {
+			lockMode = buildingParameters.getLockMode() != null
+					? buildingParameters.getLockMode()
+					: buildingParameters.getLockOptions().getLockMode();
+		}
 
 		final FetchStyleLoadPlanBuildingAssociationVisitationStrategy strategy =
 				new FetchStyleLoadPlanBuildingAssociationVisitationStrategy(
 						collectionPersister.getFactory(),
 						buildingParameters.getQueryInfluencers(),
-						this.lockOptions.getLockMode()
+						lockMode
 		);
 
 		final LoadPlan plan = MetamodelDrivenLoadPlanBuilder.buildRootCollectionLoadPlan( strategy, collectionPersister );
@@ -100,7 +109,9 @@ public abstract class AbstractLoadPlanBasedCollectionInitializer
 			qp.setPositionalParameterTypes( new Type[]{ collectionPersister.getKeyType() } );
 			qp.setPositionalParameterValues( ids );
 			qp.setCollectionKeys( ids );
-			qp.setLockOptions(lockOptions);
+			if (isHHH9764OptimsticLockingFixEnabled()) {
+				qp.setLockOptions(lockOptions);
+			}
 
 			executeLoad(
 					session,
@@ -121,6 +132,10 @@ public abstract class AbstractLoadPlanBasedCollectionInitializer
 		}
 
 		log.debug( "Done loading collection" );
+	}
+	
+	public static boolean isHHH9764OptimsticLockingFixEnabled() {
+		return System.getProperty("hhh.9764.optimistic.locking.fix.enabled", "true").equals("true");
 	}
 
 	protected QueryableCollection collectionPersister() {
